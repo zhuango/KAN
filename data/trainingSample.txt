@@ -1,0 +1,1 @@
+9047334	polypeptides of animal $1 gene0 consist of three amino terminal catalytic domains $2 malonyl acetyltransacylase and	50671	54995	fatty acid synthase	beta-ketoacyl synthase	16	0

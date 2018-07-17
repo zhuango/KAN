@@ -1,0 +1,1 @@
+[PMID]  [Context]   [Entrez Gene ID of entity1]    [Entrez Gene ID of entity2]  [Mention of entity1]    [Mention of entity2]    [Length of context] [Label: 1 for postive and 0 for negative]
