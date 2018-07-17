@@ -399,8 +399,8 @@ if not os.path.exists(resultOutput):
     os.makedirs(resultOutput)
 if not os.path.exists(paraPathPref):
     os.makedirs(paraPathPref)
-trainPath = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_win3_39debug.txt"
-testsPath = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_ForTest_win3_39debug.txt"
+trainPath = "../data/train.txt"
+testsPath = "../data/test.txt"
 print("Load training samples...")
 trainSet = LoadSamples(trainPath)
 print("Load test samples...")
