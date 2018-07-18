@@ -1,13 +1,13 @@
+#!/usr/bin/python3
+
+import os
+import time
 
 from KAN import *
 from LoadDataVariables import *
 from merge import mergeResult
 
 def train(kan, trainset, paraPathPref='./parameters/model'):
-    maxp = 0
-    maxr = 0
-    maxf = 0
-    maxacc = 0
     trainsetSize = len(trainset)
 
     optimizer = optim.Adadelta(kan.parameters, lr=0.1)
@@ -51,8 +51,6 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
                 sum_loss.backward()
                 optimizer.step()
                 sum_loss = VariableDevice(torch.zeros(1), cuda)
-                for para in kan.parameters:
-                    para._grad.data.zero_()
                 optimizer.zero_grad()
         if instanceCount != 0:
             sum_loss = sum_loss / instanceCount
@@ -64,14 +62,15 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
 
         time1 = time.time()
         print("Iteration", epoch_idx, "Loss", totalLoss / trainsetSize, "train Acc: ", float(correct / trainsetSize) , "time: ", str(time1 - time0))
-            
+        
+        # Test
         currentResult = resultOutput + "result_" + str(epoch_idx) + ".txt"
         mergedResult = currentResult + ".merged"
         resultStream = open(currentResult, 'w')
         probPath   = resultOutput + "prob_" + str(epoch_idx) + ".txt"
         test(kan, testset, resultStream, probPath)
         resultStream.close()
-                
+        
         mergeResult(currentResult, mergedResult)
 
 def test(kan, testSet, resultStream=None, probPath=None):
@@ -106,8 +105,6 @@ def test(kan, testSet, resultStream=None, probPath=None):
     acc = correct/count
     print("test Acc: ", acc)
     print("time    : ", str(time1 - time0))
-    return acc
-
 
 def GetSampleProperty(sample):
     contxtWords = []
@@ -168,6 +165,18 @@ def GetSampleProperty(sample):
 cuda = torch.cuda.is_available()
 softmax = torch.nn.Softmax()
 loss_function = torch.nn.NLLLoss()
+
+# python3 main.py --batchSize 100 --wd 100 --ed 100 --hop 2 --class 2 --epoch 20 
+# --wePath ../data/wordEmb/bio-word2id100
+# --wIDPath ../data/wordEmb/bio-embed100
+# --eePath ../data/KB/entity2vec.vec
+# --rePath ./data/KB/relation2vec.vec
+# --t2idPath ../data/KB/triple2id.txt
+# --e2idPath ../data/KB/triple2id.txt
+# --paraPath ./parameters/
+# --results ./results/
+# --trainPath ../data/train.txt
+# --testPath ../data/test.txt
 batchSize = 100
 wordVectorLength = 100
 entityVecSize = 100

@@ -1,11 +1,11 @@
 #!/usr/bin/python3
+
 import torch
 from torch.autograd import Variable
 from collections import defaultdict, OrderedDict
 import numpy as np
 
 def LoadWordVectors(wordVectorFile, dimension):
-    #word2vector = defaultdict( lambda:Variable(torch.FloatTensor(np.array(np.random.uniform(-0.01, 0.01, (dimension, 1)), dtype=np.float)), requires_grad=True) )
     word2vector = {}
     with open(wordVectorFile, 'r') as wordVectorsStream:
         for line in wordVectorsStream:
@@ -26,7 +26,7 @@ def LoadWord2id(wordIdFile):
     return word2id
 
 def LoadEntityVectors(entityVectorFile, dimension):    
-    entity2vector = OrderedDict()#defaultdict( lambda:Variable(torch.FloatTensor(np.array(np.random.uniform(-0.01, 0.01, (dimension, 1)), dtype=np.float)), requires_grad=True) )
+    entity2vector = OrderedDict()
     entity2vector['reserved'] = Variable(torch.FloatTensor(np.array(np.random.uniform(-0.0, 0.0, (dimension, 1)), dtype=np.float)), requires_grad=True)
     id = 0
     with open(entityVectorFile, 'r') as entityVectorsStream:
@@ -77,15 +77,11 @@ def LoadRelationVectors(filename, dimension, cuda=False, requires_grad=False):
         unrelated = Variable(torch.FloatTensor(np.array(np.random.uniform(-0.0, 0.0, (dimension, 1)), dtype=np.float)),  requires_grad=requires_grad)
 
     id = 0
-    #obsoleteInteraction = ["4", "", "", "", "", ""]
     with open(filename, 'r') as relationVectorsStream:
         for line in relationVectorsStream:
             items = line.strip().split("\t")
             if len(items) < dimension:
                 continue
-            # if id == 4:
-            #     id += 1
-            #     continue
             if cuda:
                 relation2vector[str(id)] = Variable(torch.FloatTensor(np.array([float(elem) for elem in items], dtype=np.float).reshape(dimension, 1)).cuda(), requires_grad=True)
             else:
@@ -101,7 +97,6 @@ def LoadTriples(filename):
         for line in f:
             items = line.strip().split("\t")
             triple[items[0] + "_" + items[1]] = items[2]
-            #triple[items[1] + "_" + items[0]] = items[2]
     return triple
 
 def LoadEntityName2FormatID(filename):

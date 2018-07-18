@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 def mergeResult(resultPath, mergedResultPath):
     dic = {}
     with open(resultPath,'r') as f:

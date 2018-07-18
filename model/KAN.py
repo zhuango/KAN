@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
 import numpy as np
-import os
-import matplotlib.pyplot as plt
 import math
 
 import torch
@@ -10,10 +8,6 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
-
-from collections import defaultdict
-import time
-import argparse
 
 
 torch.manual_seed(4324)
