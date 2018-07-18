@@ -1,7 +1,6 @@
 # KAN
-=====
-
 **Knowledge-aware Attention Network for Protein-Protein Interaction Extraction** Zhou, H., Liu Z., Ning S. et al. Submitted to ***Bioinformatics***
+
 
 An implementation of Knowledge-aware attention networks (KAN) for protein-protein extraction task.
 
@@ -37,3 +36,7 @@ the option you can choose are:
 - `--e2idPath` path of file that contains mapping from Entrez Gene ID to number.
 - `--paraPath` path of model parameters.
 - `--results` path where the results write to.
+
+# Reference
+
+[1] Bordes, Antoine, et al. Translating embeddings for modeling multi-relational data. Proceedings of NIPS, 2013.
