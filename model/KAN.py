@@ -120,7 +120,7 @@ class EncoderLayer():
         output = self.AddNorm(output.transpose(0, 1) + self.ff(output).transpose(0, 1)).transpose(0, 1)
         return output
 
-class Transformer():
+class KAN():
     def __init__(self, wordEmbed, entityEmbed, batchSize, wordVectorLength, hopNumber, classNumber, numEpoches, cuda=True):
         self.wordEmbed = wordEmbed
         self.entityEmbed = entityEmbed
@@ -199,109 +199,107 @@ class Transformer():
         finallinearLayerOut = torch.mm(softmax_W, output) + softmax_b
         return finallinearLayerOut
 
-    def train(self, trainset, paraPathPref='./parameters/model'):
-        maxp = 0
-        maxr = 0
-        maxf = 0
-        maxacc = 0
-        trainsetSize = len(trainset)
+def train(kan, trainset, paraPathPref='./parameters/model'):
+    maxp = 0
+    maxr = 0
+    maxf = 0
+    maxacc = 0
+    trainsetSize = len(trainset)
 
-        optimizer = optim.Adadelta(self.parameters, lr=0.1)
-        #optimizer = optim.Adam(self.parameters, lr=0.1)
-        #optimizer0 = optim.Adagrad(self.parameters, lr=0.01)
+    optimizer = optim.Adadelta(kan.parameters, lr=0.1)
          
-        for epoch_idx in range(self.numEpoches):
-            myRandom.shuffle(trainset)
-            sum_loss = VariableDevice(torch.zeros(1), cuda)
-            print("=====================================================================")
-            print("epoch " + str(epoch_idx) + ", trainSize: " + str(trainsetSize))
-            print("hop size: ", str(self.hopNumber))
+    for epoch_idx in range(kan.numEpoches):
+        myRandom.shuffle(trainset)
+        sum_loss = VariableDevice(torch.zeros(1), cuda)
+        print("=====================================================================")
+        print("epoch " + str(epoch_idx) + ", trainSize: " + str(trainsetSize))
+        print("hop size: ", str(kan.hopNumber))
 
-            correct = 0
-            instanceCount = 0
-            time0 = time.time()  
-            optimizer.zero_grad()  
-            for sample in trainset:
-                sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
-                finallinearLayerOut = self.forward(contxtWords, 
-                                                e1, 
-                                                e2, 
-                                                e1p,
-                                                e2p,
-                                                relation,
-                                                sentLength)
+        correct = 0
+        instanceCount = 0
+        time0 = time.time()  
+        optimizer.zero_grad()  
+        for sample in trainset:
+            sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
+            finallinearLayerOut = kan.forward(contxtWords, 
+                                            e1, 
+                                            e2, 
+                                            e1p,
+                                            e2p,
+                                            relation,
+                                            sentLength)
 
-                calssification = self.softmax(finallinearLayerOut.view(1, classNumber))
-                predict = np.argmax(calssification.cpu().data.numpy())
-                if predict == label:
-                    correct += 1
+            calssification = kan.softmax(finallinearLayerOut.view(1, classNumber))
+            predict = np.argmax(calssification.cpu().data.numpy())
+            if predict == label:
+                correct += 1
 
-                log_prob = F.log_softmax(finallinearLayerOut.view(1, classNumber))
-                loss = loss_function(log_prob, VariableDevice(torch.LongTensor([label]), cuda))
-                sum_loss += loss
-                instanceCount += 1
+            log_prob = F.log_softmax(finallinearLayerOut.view(1, classNumber))
+            loss = loss_function(log_prob, VariableDevice(torch.LongTensor([label]), cuda))
+            sum_loss += loss
+            instanceCount += 1
         ###################Update#######################
-                if instanceCount >= self.batchSize:
-                    sum_loss = sum_loss / instanceCount
-                    instanceCount = 0
-                    sum_loss.backward()
-                    optimizer.step()
-                    sum_loss = VariableDevice(torch.zeros(1), cuda)
-                    for para in self.parameters:
-                        para._grad.data.zero_()
-                    optimizer.zero_grad()
-            if instanceCount != 0:
+            if instanceCount >= kan.batchSize:
                 sum_loss = sum_loss / instanceCount
+                instanceCount = 0
                 sum_loss.backward()
                 optimizer.step()
+                sum_loss = VariableDevice(torch.zeros(1), cuda)
+                for para in kan.parameters:
+                    para._grad.data.zero_()
                 optimizer.zero_grad()
+        if instanceCount != 0:
+            sum_loss = sum_loss / instanceCount
+            sum_loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
         ####################Update#######################
 
-            time1 = time.time()
-            print("Iteration", epoch_idx, "Loss", sum_loss.cpu().data.numpy()[0] / self.batchSize, "train Acc: ", float(correct / trainsetSize) , "time: ", str(time1 - time0))
+        time1 = time.time()
+        print("Iteration", epoch_idx, "Loss", sum_loss.cpu().data.numpy()[0] / kan.batchSize, "train Acc: ", float(correct / trainsetSize) , "time: ", str(time1 - time0))
             
-            currentResult = resultOutput + "result_" + str(epoch_idx) + ".txt"
-            mergedResult = currentResult + ".merged"
-            resultStream = open(currentResult, 'w')
-            probPath   = resultOutput + "prob_" + str(epoch_idx) + ".txt"
-            self.test(testset, resultStream, probPath)
-            resultStream.close()
+        currentResult = resultOutput + "result_" + str(epoch_idx) + ".txt"
+        mergedResult = currentResult + ".merged"
+        resultStream = open(currentResult, 'w')
+        probPath   = resultOutput + "prob_" + str(epoch_idx) + ".txt"
+        kan.test(testset, resultStream, probPath)
+        resultStream.close()
                 
-            mergeResult(currentResult, mergedResult)
+        mergeResult(currentResult, mergedResult)
 
-    def test(self, testSet, resultStream=None, probPath=None):
-        count = 0
-        correct = 0
-        time0 = time.time()
-        probs = []
-        for sample in testSet:
-            sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
+def test(kan, testSet, resultStream=None, probPath=None):
+    count = 0
+    correct = 0
+    time0 = time.time()
+    probs = []
+    for sample in testSet:
+        sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
 
-            finallinearLayerOut = self.forward(contxtWords, 
+        finallinearLayerOut = kan.forward(contxtWords, 
                                             e1, 
                                             e2,
                                             e1p,
                                             e2p,
                                             relation,
                                             sentLength)
-            calssification = self.softmax(finallinearLayerOut.view(1, classNumber))
+        calssification = kan.softmax(finallinearLayerOut.view(1, classNumber))
                 
-            prob = calssification.cpu().data.numpy().reshape(classNumber)
-            predict = np.argmax(prob)
-            probs.append(prob)
-            if resultStream and predict == 1:
-                resultStream.write("\t".join([sentid, e1ID, e2ID]) + "\n")
+        prob = calssification.cpu().data.numpy().reshape(classNumber)
+        predict = np.argmax(prob)
+        probs.append(prob)
+        if resultStream and predict == 1:
+            resultStream.write("\t".join([sentid, e1ID, e2ID]) + "\n")
 
-            if predict == label:
-                    correct += 1.0
-            count += 1
-        if probPath:
-            np.savetxt(probPath, probs, '%.5f',delimiter=' ')
-        time1 = time.time()
-        acc = correct/count
-        print("test Acc: ", acc)
-        print("time    : ", str(time1 - time0))
-        return acc
+        if predict == label:
+                correct += 1.0
+        count += 1
+    if probPath:
+        np.savetxt(probPath, probs, '%.5f',delimiter=' ')
+    time1 = time.time()
+    acc = correct/count
+    print("test Acc: ", acc)
+    print("time    : ", str(time1 - time0))
+    return acc
 
 
 def GetSampleProperty(sample):
@@ -353,6 +351,7 @@ def GetSampleProperty(sample):
     elif pairStr1 in triples:
         relation = relation2vector[triples[pairStr1]]
     else:
+        # a zero vector.
         relation = relation2vector['unknow']
     
     label = int(sample[-1])
@@ -368,8 +367,6 @@ hopNumber = 2
 classNumber = 2
 numEpoches = 20
 cuda = torch.cuda.is_available()
-foldN = 5
-win = 3
 
 print("Load word id...")
 word2id = LoadWord2id("../data/wordEmb/bio-word2id100")
@@ -415,5 +412,5 @@ for sample in testSet:
     sampleTuple = GetSampleProperty(sample)
     testset.append(sampleTuple)
 print(len(testset))
-transformer = Transformer(wordEmbed, entityEmbed, batchSize, wordVectorLength, hopNumber, classNumber, numEpoches, cuda)
-transformer.train(trainset, paraPathPref)
+kan = KAN(wordEmbed, entityEmbed, batchSize, wordVectorLength, hopNumber, classNumber, numEpoches, cuda)
+train(kan, trainset, paraPathPref)
