@@ -111,25 +111,3 @@ def LoadEntityName2FormatID(filename):
             items = line.strip().split("\t")
             mapping[items[1].lower()] = items[0]
     return mapping
-
-if __name__ == "__main__":
-    # word2vector = LoadWordVectors("/home/laboratory/corpus/en_vectorTable/en_vectors_50.txt", 50)
-    # print(word2vector["<user>"])
-
-    # entity2vector = LoadEntityVector("/home/laboratory/lab/BioCreative/codePlayer/Fast-TransX/transE/output/50d/entity2vec.vec", 50)
-    # print(entity2vector["0"])
-    
-    # samples = LoadSamples("/home/laboratory/lab/BioCreative/codePlayer/preprocessing/corpus.txt")
-    # print(samples[0])
-
-    # entity2id = LoadEntity2Id("/home/laboratory/lab/BioCreative/codePlayer/Fast-TransX/data/entity2id.txt")
-    # print(entity2id["Q8IMK5"])
-    
-    # triples = LoadTriples("/home/laboratory/lab/BioCreative/codePlayer/Fast-TransX/data/triple2id.txt")
-    # print(triples)
-
-    # mapping = LoadEntityName2FormatID("/home/laboratory/lab/sem2013/DDI/durg_dic/drugbank/eName2id.txt")
-    # print(mapping)
-
-    samples = LoadMulInstanceSamples("/home/laboratory/lab/BioCreative/2017/BC6/corpus_train_sentence_mulInstance.txt")
-    print(samples[0])

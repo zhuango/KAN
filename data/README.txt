@@ -11,3 +11,4 @@ wordEmb:
 There is file named trainingSample.txt: example format of training instance.
 Format of instance:
 [PMID]  [Context]   [Entrez Gene ID of entity1]    [Entrez Gene ID of entity2]  [Mention of entity1]    [Mention of entity2]    [Length of context] [Label: 1 for postive and 0 for negative]
+In the context, the string named "$1" and "$1" represent entity1 and entity2 of this instance, respectively.
