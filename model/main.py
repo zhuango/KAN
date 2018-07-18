@@ -159,7 +159,7 @@ loss_function = torch.nn.NLLLoss()
 # --wd 100 
 # --ed 100 
 # --hop 2 
-# --class 2 
+# --clas 2 
 # --epoch 20 
 # --wePath ../data/wordEmb/bio-word2id100
 # --w2IDPath ../data/wordEmb/bio-embed100
