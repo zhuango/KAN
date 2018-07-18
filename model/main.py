@@ -2,6 +2,7 @@
 
 import os
 import time
+import argparse
 
 from KAN import *
 from LoadDataVariables import *
@@ -26,13 +27,7 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
         optimizer.zero_grad()
         for sample in trainset:
             sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
-            finallinearLayerOut = kan.forward(contxtWords, 
-                                            e1, 
-                                            e2, 
-                                            e1p,
-                                            e2p,
-                                            relation,
-                                            sentLength)
+            finallinearLayerOut = kan.forward(contxtWords, e1, e2, e1p, e2p, relation, sentLength)
 
             calssification = softmax(finallinearLayerOut.view(1, classNumber))
             predict = np.argmax(calssification.cpu().data.numpy())
@@ -81,13 +76,7 @@ def test(kan, testSet, resultStream=None, probPath=None):
     for sample in testSet:
         sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
 
-        finallinearLayerOut = kan.forward(contxtWords, 
-                                            e1, 
-                                            e2,
-                                            e1p,
-                                            e2p,
-                                            relation,
-                                            sentLength)
+        finallinearLayerOut = kan.forward(contxtWords, e1, e2, e1p, e2p, relation, sentLength)
         calssification = softmax(finallinearLayerOut.view(1, classNumber))
                 
         prob = calssification.cpu().data.numpy().reshape(classNumber)
@@ -106,11 +95,7 @@ def test(kan, testSet, resultStream=None, probPath=None):
     print("test Acc: ", acc)
     print("time    : ", str(time1 - time0))
 
-def GetSampleProperty(sample):
-    contxtWords = []
-    n = []
-    e1ps = []
-    e2ps = []
+def GetInstanceProperty(sample):
     words = sample[1].split(" ")
     e1Index = words.index("$1")
     e2Index = words.index("$2")
@@ -166,64 +151,91 @@ cuda = torch.cuda.is_available()
 softmax = torch.nn.Softmax()
 loss_function = torch.nn.NLLLoss()
 
-# python3 main.py --batchSize 100 --wd 100 --ed 100 --hop 2 --class 2 --epoch 20 
-# --wePath ../data/wordEmb/bio-word2id100
-# --wIDPath ../data/wordEmb/bio-embed100
-# --eePath ../data/KB/entity2vec.vec
-# --rePath ./data/KB/relation2vec.vec
-# --t2idPath ../data/KB/triple2id.txt
-# --e2idPath ../data/KB/triple2id.txt
-# --paraPath ./parameters/
-# --results ./results/
+# Hyperparameter setting:
+# python3 main.py 
 # --trainPath ../data/train.txt
 # --testPath ../data/test.txt
-batchSize = 100
-wordVectorLength = 100
-entityVecSize = 100
-hopNumber = 2
-classNumber = 2
-numEpoches = 20
+# --batchSize 100 
+# --wd 100 
+# --ed 100 
+# --hop 2 
+# --class 2 
+# --epoch 20 
+# --wePath ../data/wordEmb/bio-word2id100
+# --w2IDPath ../data/wordEmb/bio-embed100
+# --eePath ../data/KB/entity2vec.vec
+# --rePath ../data/KB/relation2vec.vec
+# --t2idPath ../data/KB/triple2id.txt
+# --e2idPath ../data/KB/entity2id.txt
+# --paraPath ./parameters/
+# --results ./results/
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--trainPath", default="../data/train.txt")
+parser.add_argument("--testPath", default="../data/test.txt")
+parser.add_argument("--batchSize", default=100, type=int)
+parser.add_argument("--wd", default=100, type=int)
+parser.add_argument("--ed", default=100, type=int)
+parser.add_argument("--hop", default=2, type=int)
+parser.add_argument("--clas", default=2, type=int)
+parser.add_argument("--epoch", default=20, type=int)
+parser.add_argument("--wePath", default="../data/wordEmb/bio-word2id100")
+parser.add_argument("--w2IDPath", default="../data/wordEmb/bio-embed100")
+parser.add_argument("--eePath", default="../data/KB/entity2vec.vec")
+parser.add_argument("--rePath", default="../data/KB/relation2vec.vec")
+parser.add_argument("--t2idPath", default="../data/KB/triple2id.txt")
+parser.add_argument("--e2idPath", default="../data/KB/entity2id.txt")
+parser.add_argument("--paraPath", default="./parameters/")
+parser.add_argument("--results", default="./results/")
+args = parser.parse_args()
+
+batchSize           = args.batchSize
+wordVectorLength    = args.wd
+entityVecSize       = args.ed
+hopNumber           = args.hop
+classNumber         = args.clas
+numEpoches          = args.epoch
 
 print("Loading word id...")
-word2id = LoadWord2id("../data/wordEmb/bio-word2id100")
+word2id = LoadWord2id(args.wePath)
 print("Loading word vectors...")
-ten = np.loadtxt("../data/wordEmb/bio-embed100")
+ten = np.loadtxt(args.w2IDPath)
 wordEmbed = nn.Embedding(ten.shape[0], wordVectorLength)
 wordEmbed.weight = ParameterDevice(torch.FloatTensor(ten), cuda)
 
 print("Loading entity vectors...")
-entity2vector = np.loadtxt("../data/KB/entity2vec.vec")
+entity2vector = np.loadtxt(args.eePath)
 entityEmbed = nn.Embedding(entity2vector.shape[0], entity2vector.shape[1])
 entityEmbed.weight = ParameterDevice(torch.FloatTensor(entity2vector), cuda)
 
 print("Loading relation vectors...")
-relation2vector = LoadRelationVectors("../data/KB/relation2vec.vec", wordVectorLength, cuda)
+relation2vector = LoadRelationVectors(args.rePath, wordVectorLength, cuda)
 print("Loading triples...")
-triples = LoadTriples("../data/KB/triple2id.txt")
+triples = LoadTriples(args.t2idPath)
 print("Loading entity id mapping...")
-entity2id = LoadEntity2Id("../data/KB/entity2id.txt")
+entity2id = LoadEntity2Id(args.e2idPath)
 
-
-paraPathPref = './parameters/'
-resultOutput = './results/'
+paraPathPref = args.paraPath
+resultOutput = args.results
 if not os.path.exists(resultOutput):
     os.makedirs(resultOutput)
 if not os.path.exists(paraPathPref):
     os.makedirs(paraPathPref)
-trainPath = "../data/train.txt"
-testsPath = "../data/test.txt"
+
+trainPath = args.trainPath
+testsPath = args.testPath
 print("Load training samples...")
 trainSet = LoadSamples(trainPath)
 print("Load test samples...")
 testSet = LoadSamples(testsPath)
 trainset = []
 for sample in trainSet[0:230]:
-    sampleTuple = GetSampleProperty(sample)
+    sampleTuple = GetInstanceProperty(sample)
     trainset.append(sampleTuple)
-
 testset = []
 for sample in testSet[0:230]:
-    sampleTuple = GetSampleProperty(sample)
+    sampleTuple = GetInstanceProperty(sample)
     testset.append(sampleTuple)
+    
 kan = KAN(wordEmbed, entityEmbed, wordVectorLength, entityVecSize, hopNumber, classNumber, cuda)
 train(kan, trainset, paraPathPref)
