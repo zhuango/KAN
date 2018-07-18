@@ -1,6 +1,9 @@
 # KAN
-**Knowledge-aware Attention Network for Protein-Protein Interaction Extraction** Zhou, H., Liu Z., Ning S. et al. Submitted to ***Bioinformatics***
 
+![Supported Python versions](https://img.shields.io/badge/python-3.6-blue.svg)
+![Supported Pytorch versions](https://img.shields.io/badge/Pytorch-0.2-blue.svg)
+
+**Knowledge-aware Attention Network for Protein-Protein Interaction Extraction** Zhou, H., Liu Z., Ning S. et al. Submitted to ***Bioinformatics***
 
 An implementation of Knowledge-aware attention networks (KAN) for protein-protein extraction task.
 
