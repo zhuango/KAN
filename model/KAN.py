@@ -262,7 +262,7 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
         mergedResult = currentResult + ".merged"
         resultStream = open(currentResult, 'w')
         probPath   = resultOutput + "prob_" + str(epoch_idx) + ".txt"
-        kan.test(testset, resultStream, probPath)
+        test(testset, resultStream, probPath)
         resultStream.close()
                 
         mergeResult(currentResult, mergedResult)
