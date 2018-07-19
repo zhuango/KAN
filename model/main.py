@@ -229,11 +229,11 @@ trainSet = LoadSamples(trainPath)
 print("Load test samples...")
 testSet = LoadSamples(testsPath)
 trainset = []
-for sample in trainSet[0:230]:
+for sample in trainSet:
     sampleTuple = GetInstanceProperty(sample)
     trainset.append(sampleTuple)
 testset = []
-for sample in testSet[0:230]:
+for sample in testSet:
     sampleTuple = GetInstanceProperty(sample)
     testset.append(sampleTuple)
     
