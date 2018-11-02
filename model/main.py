@@ -8,11 +8,61 @@ from KAN import *
 from LoadDataVariables import *
 from merge import mergeResult
 
+def prf(predicPath, goldPath):
+    p = 0.0
+    r = 0.0
+    f = 0.0
+    sampleCount = 0
+    goldCount = 0
+    ppCount = 0
+
+    goldDict = {}
+    with open(goldPath, 'r') as goldStream:
+        for line in goldStream:
+            items= line.strip().split("\t")
+            if items[0] not in goldDict:
+                goldDict[items[0]] = []
+            goldDict[items[0]].append(items[1] + "\t" + items[2])
+            goldCount += 1
+
+    with open(predicPath, 'r') as predicStream:
+        for line in predicStream:
+            items = line.strip().split("\t")
+            if items[0] not in goldDict:
+                #print(items[0])
+                #sampleCount += 1
+                continue
+            gold = goldDict[items[0]]
+            pairStr0 = items[1] + "\t" + items[2]
+            pairStr1 = items[2] + "\t" + items[1]
+            
+            if pairStr0 in gold:
+                ppCount += 1
+            elif pairStr1 in gold:
+                ppCount += 1
+
+            sampleCount += 1
+    try:
+        # print(sampleCount)
+        p = float(ppCount) / float(sampleCount)
+        r = float(ppCount) / float(goldCount)
+        f = 2 * p * r / (p + r)
+    except:
+        return 0.0, 0.0, 0.0
+    return p*100, r*100, f*100
+
 def train(kan, trainset, paraPathPref='./parameters/model'):
     trainsetSize = len(trainset)
 
     optimizer = optim.Adadelta(kan.parameters, lr=0.1)
-         
+    
+    myRandom.shuffle(trainset)
+    validSet = trainset[:100]
+    trainset = trainset[100:]
+    test_idx = 0
+    oldp = 0.0
+    drop = 0
+    
     for epoch_idx in range(numEpoches):
         myRandom.shuffle(trainset)
         sum_loss = VariableDevice(torch.zeros(1), cuda)
@@ -58,16 +108,36 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
         time1 = time.time()
         print("Iteration", epoch_idx, "Loss", totalLoss / trainsetSize, "train Acc: ", float(correct / trainsetSize) , "time: ", str(time1 - time0))
         
-        # Test
-        currentResult = resultOutput + "result_" + str(epoch_idx) + ".txt"
-        mergedResult = currentResult + ".merged"
-        resultStream = open(currentResult, 'w')
-        probPath   = resultOutput + "prob_" + str(epoch_idx) + ".txt"
-        test(kan, testset, resultStream, probPath)
-        resultStream.close()
-        
-        mergeResult(currentResult, mergedResult)
+        # Valid
+        currentValidResult = resultOutput + "result_valid_" + str(epoch_idx) + ".txt"
+        mergedValidResult = currentValidResult + ".merged"
+        resultValidStream = open(currentValidResult, 'w')
 
+        test(kan, validSet, resultValidStream)
+        resultValidStream.close()
+        mergeResult(currentValidResult, mergedValidResult)
+        p, r, f = prf(mergedValidResult, "../data/trainGold.txt")
+        print("valid P: {} R: {} F: {}".format(p, r, f))
+
+        if p > oldp:
+            oldp = p
+            drop = 0
+            # Test
+            currentResult = resultOutput + "result_" + str(test_idx) + ".txt"
+            mergedResult = currentResult + ".merged"
+            resultStream = open(currentResult, 'w')
+            probPath   = resultOutput + "prob_" + str(test_idx) + ".txt"
+            test(kan, testset, resultStream, probPath)
+            resultStream.close()
+            
+            mergeResult(currentResult, mergedResult)
+            p, r, f = prf(mergedResult, "../data/testGold.txt")
+            print("test P: {} R: {} F: {}".format(p, r, f))
+            test_idx += 1
+        else:
+            drop += 1
+            if drop > 2:
+                break
 def test(kan, testSet, resultStream=None, probPath=None):
     count = 0
     correct = 0
@@ -209,7 +279,7 @@ entityEmbed = nn.Embedding(entity2vector.shape[0], entity2vector.shape[1])
 entityEmbed.weight = ParameterDevice(torch.FloatTensor(entity2vector), cuda)
 
 print("Loading relation vectors...")
-relation2vector = LoadRelationVectors(args.rePath, wordVectorLength, cuda)
+relation2vector = LoadRelationVectors(args.rePath, entityVecSize, cuda)
 print("Loading triples...")
 triples = LoadTriples(args.t2idPath)
 print("Loading entity id mapping...")

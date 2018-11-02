@@ -10,8 +10,8 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 
-torch.manual_seed(4324)
-myRandom = np.random.RandomState(2543)
+torch.manual_seed(2333)
+myRandom = np.random.RandomState(2333)
 
 def VariableDevice(data, cuda=True, requires_grad=False):
     if cuda:
