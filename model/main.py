@@ -57,8 +57,8 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
     optimizer = optim.Adadelta(kan.parameters, lr=0.1)
     
     myRandom.shuffle(trainset)
-    validSet = trainset[:200]
-    trainset = trainset[200:]
+    validSet = trainset[:100]
+    trainset = trainset[100:]
     test_idx = 0
     oldp = 0.0
     drop = 0
