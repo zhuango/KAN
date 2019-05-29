@@ -1,6 +1,6 @@
-mappingFile = "/home/laboratory/lab/ACL2017/corpus/BioCreative/gold/homologene.data"
-goldFile = "/home/laboratory/lab/ACL2017/corpus/BioCreative/gold/gold.txt"
-homoGold = "/home/laboratory/lab/ACL2017/corpus/BioCreative/gold/gold_homo.txt"
+mappingFile = "../data/homologene.data"
+goldFile = "../data/testGold.txt"
+homoGold = "../data/testGoldHomo.txt"
 mapping = {}
 with open(mappingFile, 'r') as f:
     for line in f:

@@ -1,10 +1,6 @@
-singleSentences = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_sentence_win3_39debug.txt"
-crossSentences  = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_sentence_whole2Sentence_39debug.txt"
-fullCorpus = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_win3_39debug.txt"
-
-# singleSentences = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_sentence_ForTest_win3_39debug.txt"
-# crossSentences  = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_sentence_ForTest_whole2Sentence_39debug.txt"
-# fullCorpus = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_ForTest_win3_39debug.txt"
+singleSentences = "../data/xml2IntraSentence.txt"
+crossSentences  = "../data/xml2InterSentence.txt"
+fullCorpus = "../data/mergedInstances.txt"
 
 pairDict = {}
 

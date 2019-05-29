@@ -53,7 +53,6 @@ def writePassage(fulltextElement, labelPairs, pmid, formatCorpusStream):
     fulltextOffset = int(fulltextElement[1].text)
 
     sentences = [sent + ". " for sent in text.split(". ")]
-    # print(sentences)
     sentenceCount = len(sentences)
     sentenceOffsets = [fulltextOffset]
     for j in range(1, sentenceCount):
@@ -121,12 +120,9 @@ def writePassage(fulltextElement, labelPairs, pmid, formatCorpusStream):
                         # swap the mention to UniprotId.
                         sentence = "{} $1 {} $2 {}".format(sentenceText[0:e1start], sentenceText[e1end:e2start], sentenceText[e2end:]).lower()
 
-                        # if e1Text in sentence or e2Text in sentence:
-                        #     continue
                         for entity in entityNodes:
                             sentence = sentence.replace("{}".format(entity.find("text").text.lower()), " gene0 ")
-                        # if sentence.count('.') >= 2:
-                        #     continue
+
                         sentence = sentence.replace("[", ' ')
                         sentence = sentence.replace("]", ' ')
                         sentence = sentence.replace("\"", ' ')
@@ -157,9 +153,6 @@ def writePassage(fulltextElement, labelPairs, pmid, formatCorpusStream):
                         sentence = re.sub(' [0-9][0-9]* ', ' NUMBER ', sentence)
                         sentence = re.sub(' [0-9][0-9]* ', ' NUMBER ', sentence)
                         
-
-
-                        #sentence = "{} {} {}".format(e1Id, sentence.strip(), e2Id)
                         sentence = sentence.strip().replace("   ", " ")
                         sentence = sentence.replace("  ", " ").replace("  ", " ")
                         
@@ -170,11 +163,7 @@ def writePassage(fulltextElement, labelPairs, pmid, formatCorpusStream):
                         endPos = min(e2Pos + win + 1, len(words))
                         sentence = " ".join(words[startPos:endPos])
                         sentLength = len(sentence.split(" "))
-                        # we do not want the entities in two sentences.
-                        # and sentLength > 3
-                        #if "." not in sentence and sentLength > 3:
                         if sentLength > 3:
-                            # sentence = sentence.replace(".", ' ')
                             formatCorpusStream.write("\t".join([pmid, sentence, e1Id, e2Id, e1Text, e2Text, str(sentLength), label]) + "\n")
                 e2Index += 1
             e1Index += 1
@@ -189,40 +178,38 @@ def gene2protein(dictPath):
             gene2proteinDict[items[1]].append(items[0])
     return gene2proteinDict
 
-labelPath = "/home/laboratory/lab/ACL2017/corpus/BioCreative/bc2_ips_pmid2ppi_train_ori.txt"
-corpusRoot = "/home/laboratory/lab/ACL2017/corpus/BioCreative/splitOffset/"
-samplePath = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_sentence_win3_39debug.txt"
-# labelPath = "/home/laboratory/lab/ACL2017/corpus/BioCreative/gold/gold.1.txt"
-# corpusRoot = "/home/laboratory/lab/ACL2017/corpus/BioCreative/testSplit/"
-# samplePath = "/home/laboratory/lab/ACL2017/corpus/BioCreative/corpus_train_sentence_ForTest_win3_39debug.txt"
+labelPath = "../data/trainGold.txt"
+# one xml file for one document
+corpusRoot = "../data/splitOffset/"
+samplePath = "../data/xml2InterSentence.txt"
 win = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--label", default=labelPath, help="path of labels")
 parser.add_argument("--offsets", default=corpusRoot, help="path of PubTator format files.")
 parser.add_argument("--output", default=samplePath, help="path of sentences.")
+parser.add_argument("--win", default=3, type=int)
 args = parser.parse_args()
 
-# "/home/laboratory/lab/BioCreative/2010/BC2/bc2_ips_pmid2ppi_train.txt"
-# "/home/laboratory/lab/BioCreative/2010/BC2/trainOffset/"
-# "/home/laboratory/lab/BioCreative/2010/BC2/corpus_train.txt"
 labelPath  = args.label
 corpusRoot = args.offsets
 samplePath = args.output
+win        = args.win
 
 labels = {}
-with open(labelPath, 'r') as labelsStream:
-    for line in labelsStream:
-        items = line.strip().split("\t")
-        if items[0] not in labels:
-            labels[items[0]] = []
-        
-        entities1 = items[1].split("|")
-        entities2 = items[2].split("|")
-        for entity1 in entities1:
-            for entity2 in entities2:
-                labels[items[0]].append(entity1 + "_" + entity2)
-                labels[items[0]].append(entity2 + "_" + entity1)
+if labelPath:
+    with open(labelPath, 'r') as labelsStream:
+        for line in labelsStream:
+            items = line.strip().split("\t")
+            if items[0] not in labels:
+                labels[items[0]] = []
+            
+            entities1 = items[1].split("|")
+            entities2 = items[2].split("|")
+            for entity1 in entities1:
+                for entity2 in entities2:
+                    labels[items[0]].append(entity1 + "_" + entity2)
+                    labels[items[0]].append(entity2 + "_" + entity1)
 
 formatCorpusStream = open(samplePath, 'w')
 d = Path(corpusRoot)
