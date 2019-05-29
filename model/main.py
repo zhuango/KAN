@@ -8,6 +8,10 @@ from KAN import *
 from LoadDataVariables import *
 from merge import mergeResult
 
+cuda = False#torch.cuda.is_available()
+softmax = torch.nn.Softmax()
+loss_function = torch.nn.NLLLoss()
+
 def prf(predicPath, goldPath):
     p = 0.0
     r = 0.0
@@ -51,16 +55,41 @@ def prf(predicPath, goldPath):
         return 0.0, 0.0, 0.0
     return p*100, r*100, f*100
 
-def train(kan, trainset, paraPathPref='./parameters/model'):
-    trainsetSize = len(trainset)
 
-    optimizer = optim.Adadelta(kan.parameters, lr=0.1)
+def splitData(trainset, docCount=100):
+    pmids = {}
+    validSet = []
+    trainSet = []
+
+    # Calculate instance of each document.
+    for sample in trainset:
+        if sample[0] not in pmids:
+            pmids[sample[0]] = 0
+        if sample[-1] == "1":
+            pmids[sample[0]] += 1
+
+    sortedpmids = sorted(pmids.keys(), key=lambda pmid: pmids[pmid])
+    # Entities in testset are annotated by GNormPlus, which miss many interacting protein entities.
+    # Selecting the document that having least positive instances as valid set makes valid set and test set have similar distribution.
+    validPmids = set(sortedpmids[0:docCount])
+    # Add sample which pmid are in validPmids to validSet.
+    for sample in trainset:
+        if sample[0] in validPmids:
+            validSet.append(sample)
+        else:
+            trainSet.append(sample)
+
+    return trainSet, validSet
+
+def train(kan, trainset, validset, testset, trainGold, testGold, paraPathPref='./parameters/model'):
+
+    optimizer = optim.Adadelta(kan.parameters(), lr=0.1, weight_decay=0.05)
     
-    myRandom.shuffle(trainset)
-    validSet = trainset[:100]
-    trainset = trainset[100:]
+    trainset, validset = splitData(trainset, 100)
+    trainsetSize = len(trainset)
     test_idx = 0
-    oldp = 0.0
+    maxf  = 0.0
+    maxvf = 0.0
     drop = 0
     
     for epoch_idx in range(numEpoches):
@@ -113,15 +142,14 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
         mergedValidResult = currentValidResult + ".merged"
         resultValidStream = open(currentValidResult, 'w')
 
-        test(kan, validSet, resultValidStream)
+        test(kan, validset, resultValidStream)
         resultValidStream.close()
         mergeResult(currentValidResult, mergedValidResult)
-        p, r, f = prf(mergedValidResult, "../data/trainGold.txt")
+        p, r, f = prf(mergedValidResult, trainGold)
         print("valid P: {} R: {} F: {}".format(p, r, f))
 
-        if p > oldp:
-            oldp = p
-            drop = 0
+        if f > maxvf:
+            maxvf = f
             # Test
             currentResult = resultOutput + "result_" + str(test_idx) + ".txt"
             mergedResult = currentResult + ".merged"
@@ -131,13 +159,17 @@ def train(kan, trainset, paraPathPref='./parameters/model'):
             resultStream.close()
             
             mergeResult(currentResult, mergedResult)
-            p, r, f = prf(mergedResult, "../data/testGold.txt")
+            p, r, f = prf(mergedResult, testGold)
+            if f > maxf:
+                torch.save(kan.state_dict(), paraPathPref)
+                maxf = f
+            drop = 0
             print("test P: {} R: {} F: {}".format(p, r, f))
             test_idx += 1
-        else:
-            drop += 1
-            if drop > 2:
-                break
+        # else:
+        #     drop += 1
+        #     if drop > 2:
+        #         break
 def test(kan, testSet, resultStream=None, probPath=None):
     count = 0
     correct = 0
@@ -146,7 +178,7 @@ def test(kan, testSet, resultStream=None, probPath=None):
     for sample in testSet:
         sentid, contxtWords, e1ID, e1, e2ID, e2, relation, sentLength, label, e1p, e2p = sample
 
-        finallinearLayerOut = kan.forward(contxtWords, e1, e2, e1p, e2p, relation, sentLength)
+        finallinearLayerOut = kan.forward(contxtWords, e1, e2, e1p, e2p, relation, sentLength, False)
         calssification = softmax(finallinearLayerOut.view(1, classNumber))
                 
         prob = calssification.cpu().data.numpy().reshape(classNumber)
@@ -217,9 +249,6 @@ def GetInstanceProperty(sample):
 
     return sentid, contxtWords, e1ID, e1V, e2ID, e2V, relation, n, label, e1p, e2p
 
-cuda = torch.cuda.is_available()
-softmax = torch.nn.Softmax()
-loss_function = torch.nn.NLLLoss()
 
 # Hyperparameter setting:
 # python3 main.py 
@@ -243,6 +272,9 @@ loss_function = torch.nn.NLLLoss()
 parser = argparse.ArgumentParser()
 parser.add_argument("--trainPath", default="../data/train.txt")
 parser.add_argument("--testPath", default="../data/test.txt")
+parser.add_argument("--validPath", default="../data/valid.txt")
+parser.add_argument("--trainGold", default="../data/trainGold.txt")
+parser.add_argument("--testGold", default="../data/testGold.txt")
 parser.add_argument("--batchSize", default=100, type=int)
 parser.add_argument("--wd", default=100, type=int)
 parser.add_argument("--ed", default=100, type=int)
@@ -255,8 +287,9 @@ parser.add_argument("--eePath", default="../data/KB/entity2vec.vec")
 parser.add_argument("--rePath", default="../data/KB/relation2vec.vec")
 parser.add_argument("--t2idPath", default="../data/KB/triple2id.txt")
 parser.add_argument("--e2idPath", default="../data/KB/entity2id.txt")
-parser.add_argument("--paraPath", default="./parameters/")
+parser.add_argument("--paraPath", default="./parameters/kan")
 parser.add_argument("--results", default="./results/")
+parser.add_argument("--training", default=True, type=bool)
 args = parser.parse_args()
 
 batchSize           = args.batchSize
@@ -265,7 +298,9 @@ entityVecSize       = args.ed
 hopNumber           = args.hop
 classNumber         = args.clas
 numEpoches          = args.epoch
-
+paraPath            = args.paraPath
+training            = args.training
+print(training)
 print("Loading word id...")
 word2id = LoadWord2id(args.wePath)
 print("Loading word vectors...")
@@ -285,27 +320,51 @@ triples = LoadTriples(args.t2idPath)
 print("Loading entity id mapping...")
 entity2id = LoadEntity2Id(args.e2idPath)
 
-paraPathPref = args.paraPath
 resultOutput = args.results
 if not os.path.exists(resultOutput):
     os.makedirs(resultOutput)
-if not os.path.exists(paraPathPref):
-    os.makedirs(paraPathPref)
 
-trainPath = args.trainPath
 testsPath = args.testPath
-print("Load training samples...")
-trainSet = LoadSamples(trainPath)
+testGold  = args.testGold
 print("Load test samples...")
 testSet = LoadSamples(testsPath)
-trainset = []
-for sample in trainSet:
-    sampleTuple = GetInstanceProperty(sample)
-    trainset.append(sampleTuple)
 testset = []
 for sample in testSet:
     sampleTuple = GetInstanceProperty(sample)
     testset.append(sampleTuple)
     
-kan = KAN(wordEmbed, entityEmbed, wordVectorLength, entityVecSize, hopNumber, classNumber, cuda)
-train(kan, trainset, paraPathPref)
+kan = KAN(wordEmbed, entityEmbed, wordVectorLength, entityVecSize, hopNumber, classNumber, cuda=cuda)
+
+if training:
+    trainPath = args.trainPath
+    validPath = args.validPath
+    trainGold = args.trainGold
+    print("Load training samples...")
+    trainSet = LoadSamples(trainPath)
+    print("Load valid samples...")
+    validSet = LoadSamples(validPath)
+
+    trainset = []
+    for sample in trainSet:
+        sampleTuple = GetInstanceProperty(sample)
+        trainset.append(sampleTuple)
+    
+    validset = []
+    for sample in validSet:
+        sampleTuple = GetInstanceProperty(sample)
+        validset.append(sampleTuple)
+
+    train(kan, trainset, validset, testset, trainGold, testGold, paraPath)
+else:
+    kan.load_state_dict(torch.load(paraPath))
+    
+    currentResult = resultOutput + "result.txt"
+    mergedResult = currentResult + ".merged"
+    resultStream = open(currentResult, 'w')
+    probPath   = resultOutput + "prob.txt"
+    test(kan, testset, resultStream, probPath)
+    resultStream.close()
+            
+    mergeResult(currentResult, mergedResult)
+    p, r, f = prf(mergedResult, testGold)
+    print("test P: {} R: {} F: {}".format(p, r, f))
