@@ -52,11 +52,11 @@ class EncoderLayer(Module):
             self.multiAtt_Ws.append(ws)
 
         if cuda:
-            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 1).cuda()
-            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 1).cuda()
+            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 3, padding=1).cuda()
+            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 3, padding=1).cuda()
         else:
-            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 1)
-            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 1)
+            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 3, padding=1)
+            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 3, padding=1)
 
         self.ReLU = nn.ReLU()
         self.dropout = nn.Dropout(dropout)

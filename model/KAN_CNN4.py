@@ -48,15 +48,15 @@ class EncoderLayer(Module):
             self.register_parameter("pro_q_h{}".format(i), headProject_wq)
             self.register_parameter("pro_k_h{}".format(i), headProject_wk)
             self.register_parameter("pro_v_h{}".format(i), headProject_wv)
-
+         
             self.multiAtt_Ws.append(ws)
 
         if cuda:
-            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 1).cuda()
-            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 1).cuda()
+            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 4, padding=2).cuda()
+            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 4, padding=1).cuda()
         else:
-            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 1)
-            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 1)
+            self.ff_W1 = nn.Conv1d(vectorLength, hiddenLayer, 4, padding=2)
+            self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 4, padding=1)
 
         self.ReLU = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
