@@ -81,16 +81,15 @@ def splitData(trainset, docCount=100):
 
     return trainSet, validSet
 
-def train(kan, trainset, validset, testset, trainGold, testGold, paraPathPref='./parameters/model'):
+def train(kan, trainset, validset, testset, trainGold, testGold, lr, wdecay, paraPathPref='./parameters/model'):
 
-    optimizer = optim.Adadelta(kan.parameters(), lr=0.1, weight_decay=0.05)
+    optimizer = optim.Adadelta(kan.parameters(), lr=lr, weight_decay=wdecay)
     
     trainset, validset = splitData(trainset, 100)
     trainsetSize = len(trainset)
     test_idx = 0
     maxf  = 0.0
     maxvf = 0.0
-    drop = 0
     
     for epoch_idx in range(numEpoches):
         myRandom.shuffle(trainset)
@@ -163,13 +162,9 @@ def train(kan, trainset, validset, testset, trainGold, testGold, paraPathPref='.
             if f > maxf:
                 torch.save(kan.state_dict(), paraPathPref)
                 maxf = f
-            drop = 0
             print("test P: {} R: {} F: {}".format(p, r, f))
             test_idx += 1
-        # else:
-        #     drop += 1
-        #     if drop > 2:
-        #         break
+
 def test(kan, testSet, resultStream=None, probPath=None):
     count = 0
     correct = 0
@@ -290,6 +285,8 @@ parser.add_argument("--e2idPath", default="../data/KB/entity2id.txt")
 parser.add_argument("--paraPath", default="./parameters/kan")
 parser.add_argument("--results", default="./results/")
 parser.add_argument("--training", default=True, type=bool)
+parser.add_argument("--lr", default=0.1, type=float)
+parser.add_argument("--wdecay", default=0.01, type=float)
 args = parser.parse_args()
 
 batchSize           = args.batchSize
@@ -300,6 +297,9 @@ classNumber         = args.clas
 numEpoches          = args.epoch
 paraPath            = args.paraPath
 training            = args.training
+lr                  = args.lr
+wdecay              = args.wdecay
+
 print(training)
 print("Loading word id...")
 word2id = LoadWord2id(args.wePath)
@@ -354,7 +354,7 @@ if training:
         sampleTuple = GetInstanceProperty(sample)
         validset.append(sampleTuple)
 
-    train(kan, trainset, validset, testset, trainGold, testGold, paraPath)
+    train(kan, trainset, validset, testset, trainGold, testGold, lr, wdecay, paraPath)
 else:
     kan.load_state_dict(torch.load(paraPath))
     

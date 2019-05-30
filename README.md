@@ -19,7 +19,7 @@ Go to the model path and run:
 ```
 In this setting, the default hyperparameters are used. Or run in specific settings:
 ```
-❱❱❱ python3 main.py --trainPath ../data/train.txt --validPath ../data/valid.txt --testPath ../data/test.txt --trainGold ../data/trainGold.txt --testPath ../data/testGold.txt --batchSize 100 --wd 100 --ed 100 --hop 2 --clas 2 --epoch 20 --wePath ../data/wordEmb/bio-word2id100 --w2IDPath ../data/wordEmb/bio-embed100 --eePath ../data/KB/entity2vec.vec --rePath ../data/KB/relation2vec.vec --t2idPath ../data/KB/triple2id.txt --e2idPath ../data/KB/entity2id.txt --paraPath ./parameters/kan --results ./results/ --training True
+❱❱❱ python3 main.py --trainPath ../data/train.txt --validPath ../data/valid.txt --testPath ../data/test.txt --trainGold ../data/trainGold.txt --testPath ../data/testGold.txt --batchSize 100 --wd 100 --ed 100 --hop 2 --clas 2 --epoch 20 --wePath ../data/wordEmb/bio-word2id100 --w2IDPath ../data/wordEmb/bio-embed100 --eePath ../data/KB/entity2vec.vec --rePath ../data/KB/relation2vec.vec --t2idPath ../data/KB/triple2id.txt --e2idPath ../data/KB/entity2id.txt --paraPath ./parameters/kan --results ./results/ --training True --lr 0.1 --wdecay 0.01
 ```
 
 the option you can choose are:
@@ -43,6 +43,8 @@ the option you can choose are:
 - `--paraPath` path of model parameters.
 - `--results` path where the results write to.
 - `--training` bool value for training or not. A non-empty string means training phase. An empty string means test phase.
+- `--lr` learning rate.
+- `--wdecay` weight decay.
 
 
 # Reference
