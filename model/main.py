@@ -56,7 +56,7 @@ def prf(predicPath, goldPath):
     return p*100, r*100, f*100
 
 
-def splitData(trainset, docCount=100):
+def splitData(trainset, docR=0.15):
     pmids = {}
     validSet = []
     trainSet = []
@@ -71,6 +71,7 @@ def splitData(trainset, docCount=100):
     sortedpmids = sorted(pmids.keys(), key=lambda pmid: pmids[pmid])
     # Entities in testset are annotated by GNormPlus, which miss many interacting protein entities.
     # Selecting the document that having least positive instances as valid set makes valid set and test set have similar distribution.
+    docCount = int(docR * len(pmids))
     validPmids = set(sortedpmids[0:docCount])
     # Add sample which pmid are in validPmids to validSet.
     for sample in trainset:
@@ -81,11 +82,11 @@ def splitData(trainset, docCount=100):
 
     return trainSet, validSet
 
-def train(kan, trainset, validset, testset, trainGold, testGold, lr, wdecay, paraPathPref='./parameters/model'):
+def train(kan, trainset, validsetR, testset, trainGold, testGold, lr, wdecay, paraPathPref='./parameters/model'):
 
     optimizer = optim.Adadelta(kan.parameters(), lr=lr, weight_decay=wdecay)
     
-    trainset, validset = splitData(trainset, 100)
+    trainset, validset = splitData(trainset, validsetR)
     trainsetSize = len(trainset)
     test_idx = 0
     maxf  = 0.0
@@ -159,9 +160,7 @@ def train(kan, trainset, validset, testset, trainGold, testGold, lr, wdecay, par
             
             mergeResult(currentResult, mergedResult)
             p, r, f = prf(mergedResult, testGold)
-            if f > maxf:
-                torch.save(kan.state_dict(), paraPathPref)
-                maxf = f
+            torch.save(kan.state_dict(), paraPathPref)
             print("test P: {} R: {} F: {}".format(p, r, f))
             test_idx += 1
 
@@ -275,7 +274,7 @@ parser.add_argument("--wd", default=100, type=int)
 parser.add_argument("--ed", default=100, type=int)
 parser.add_argument("--hop", default=2, type=int)
 parser.add_argument("--clas", default=2, type=int)
-parser.add_argument("--epoch", default=20, type=int)
+parser.add_argument("--epoch", default=40, type=int)
 parser.add_argument("--wePath", default="../data/wordEmb/bio-word2id100")
 parser.add_argument("--w2IDPath", default="../data/wordEmb/bio-embed100")
 parser.add_argument("--eePath", default="../data/KB/entity2vec.vec")
@@ -285,8 +284,9 @@ parser.add_argument("--e2idPath", default="../data/KB/entity2id.txt")
 parser.add_argument("--paraPath", default="./parameters/kan")
 parser.add_argument("--results", default="./results/")
 parser.add_argument("--training", default=True, type=bool)
-parser.add_argument("--lr", default=0.1, type=float)
+parser.add_argument("--lr", default=0.01, type=float)
 parser.add_argument("--wdecay", default=0.01, type=float)
+parser.add_argument("--validsetR", default=0.20, type=float)
 args = parser.parse_args()
 
 batchSize           = args.batchSize
@@ -336,25 +336,18 @@ for sample in testSet:
 kan = KAN(wordEmbed, entityEmbed, wordVectorLength, entityVecSize, hopNumber, classNumber, cuda=cuda)
 
 if training:
+    validsetR = args.validsetR
     trainPath = args.trainPath
-    validPath = args.validPath
     trainGold = args.trainGold
     print("Load training samples...")
     trainSet = LoadSamples(trainPath)
-    print("Load valid samples...")
-    validSet = LoadSamples(validPath)
 
     trainset = []
     for sample in trainSet:
         sampleTuple = GetInstanceProperty(sample)
         trainset.append(sampleTuple)
-    
-    validset = []
-    for sample in validSet:
-        sampleTuple = GetInstanceProperty(sample)
-        validset.append(sampleTuple)
 
-    train(kan, trainset, validset, testset, trainGold, testGold, lr, wdecay, paraPath)
+    train(kan, trainset, validsetR, testset, trainGold, testGold, lr, wdecay, paraPath)
 else:
     kan.load_state_dict(torch.load(paraPath))
     

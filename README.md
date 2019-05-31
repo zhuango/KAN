@@ -45,7 +45,7 @@ the option you can choose are:
 - `--training` bool value for training or not. A non-empty string means training phase. An empty string means test phase.
 - `--lr` learning rate.
 - `--wdecay` weight decay.
-
+- `--validsetR` this parameter ([0.0, 1.0]) means how much document in training set is selected to be the valid set.
 
 # Reference
 

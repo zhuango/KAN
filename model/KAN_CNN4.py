@@ -59,7 +59,9 @@ class EncoderLayer(Module):
             self.ff_W2 = nn.Conv1d(hiddenLayer, vectorLength, 4, padding=1)
 
         self.ReLU = nn.ReLU()
-        self.dropout = nn.Dropout(dropout)
+        self.dropoutTrain = nn.Dropout(dropout)
+        self.dropoutTest  = nn.Dropout(0.0)
+        self.dropout = self.dropoutTrain
         
         self.a_2 = ParameterDevice(torch.ones(vectorLength), cuda, requires_grad=True)
         self.b_2 = ParameterDevice(torch.zeros(vectorLength), cuda, requires_grad=True)
@@ -102,8 +104,10 @@ class EncoderLayer(Module):
         return output.transpose(0,1)
 
     def __call__(self, Q, K, V, training=True):
-        if not training:
-            self.dropout = nn.Dropout(0)
+        if training:
+            self.dropout = self.dropoutTrain
+        else:
+            self.dropout = self.dropoutTest
         output = self.multiHeadAttention(Q, K, V)
         output = self.AddNorm(output.transpose(0, 1) + self.ff(output).transpose(0, 1)).transpose(0, 1)
         return output
