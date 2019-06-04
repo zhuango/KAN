@@ -3,7 +3,7 @@
 ![Supported Python versions](https://img.shields.io/badge/python-3.6-blue.svg)
 ![Supported Pytorch versions](https://img.shields.io/badge/pytorch-0.2-blue.svg)
 
-**Knowledge-aware Attention Network for Protein-Protein Interaction Extraction** Zhou, H., Liu Z., Ning S. et al. Submitted to ***The Journal of Biomedical informatics***
+**Knowledge-aware Attention Network for Protein-Protein Interaction Extraction** Zhou, H., Liu Z., Ning S. et al. Accepted by ***The Journal of Biomedical informatics***
 
 An implementation of Knowledge-aware attention networks (KAN) for protein-protein extraction task.
 
@@ -19,7 +19,7 @@ Go to the model path and run:
 ```
 In this setting, the default hyperparameters are used. Or run in specific settings:
 ```
-❱❱❱ python3 main.py --trainPath ../data/train.txt --validPath ../data/valid.txt --testPath ../data/test.txt --trainGold ../data/trainGold.txt --testPath ../data/testGold.txt --batchSize 100 --wd 100 --ed 100 --hop 2 --clas 2 --epoch 20 --wePath ../data/wordEmb/bio-word2id100 --w2IDPath ../data/wordEmb/bio-embed100 --eePath ../data/KB/entity2vec.vec --rePath ../data/KB/relation2vec.vec --t2idPath ../data/KB/triple2id.txt --e2idPath ../data/KB/entity2id.txt --paraPath ./parameters/kan --results ./results/ --training True --lr 0.1 --wdecay 0.01
+❱❱❱ python3 main.py --trainPath ../data/train.txt --validPath ../data/valid.txt --testPath ../data/test.txt --trainGold ../data/trainGold.txt --testPath ../data/testGold.txt --batchSize 100 --wd 100 --ed 100 --hop 2 --clas 2 --epoch 20 --wePath ../data/wordEmb/bio-word2id100 --w2IDPath ../data/wordEmb/bio-embed100 --eePath ../data/KB/entity2vec.vec --rePath ../data/KB/relation2vec.vec --t2idPath ../data/KB/triple2id.txt --e2idPath ../data/KB/entity2id.txt --paraPath ./parameters/kan --results ./results/ --training True --lr 0.1 --wdecay 0.0 --validsetR 0.15
 ```
 
 the option you can choose are:

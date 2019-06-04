@@ -132,8 +132,8 @@ class KAN(Module):
         self.softmax_W = ParameterDevice(torch.FloatTensor(myRandom.uniform(-0.01, 0.01, (classNumber, self.vectorLength*2 + wordVectorLength))), cuda, requires_grad=True)
         self.softmax_b = ParameterDevice(torch.FloatTensor(myRandom.uniform(-0.01, 0.01, (classNumber, 1))), cuda, requires_grad=True)
         
-        self.encoderLayer0 = EncoderLayer(4, self.vectorLength*2, self.vectorLength, self.vectorLength, self.vectorLength, cuda=cuda, dropout=0.1)
-        self.encoderLayer1 = EncoderLayer(4, self.vectorLength*2, self.vectorLength, self.vectorLength, self.vectorLength, cuda=cuda, dropout=0.1)
+        self.encoderLayer0 = EncoderLayer(4, self.vectorLength*2, self.vectorLength, self.vectorLength, self.vectorLength, cuda=cuda, dropout=0.5)
+        self.encoderLayer1 = EncoderLayer(4, self.vectorLength*2, self.vectorLength, self.vectorLength, self.vectorLength, cuda=cuda, dropout=0.5)
 
         self.softmax = torch.nn.Softmax()
 

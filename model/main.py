@@ -284,9 +284,9 @@ parser.add_argument("--e2idPath", default="../data/KB/entity2id.txt")
 parser.add_argument("--paraPath", default="./parameters/kan")
 parser.add_argument("--results", default="./results/")
 parser.add_argument("--training", default=True, type=bool)
-parser.add_argument("--lr", default=0.01, type=float)
-parser.add_argument("--wdecay", default=0.01, type=float)
-parser.add_argument("--validsetR", default=0.20, type=float)
+parser.add_argument("--lr", default=0.1, type=float)
+parser.add_argument("--wdecay", default=0.0, type=float)
+parser.add_argument("--validsetR", default=0.15, type=float)
 args = parser.parse_args()
 
 batchSize           = args.batchSize
