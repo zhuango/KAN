@@ -65,12 +65,11 @@ def splitData(trainset, docR=0.15):
     for sample in trainset:
         if sample[0] not in pmids:
             pmids[sample[0]] = 0
-        if sample[-1] == "1":
-            pmids[sample[0]] += 1
+        pmids[sample[0]] += 1
 
     sortedpmids = sorted(pmids.keys(), key=lambda pmid: pmids[pmid])
     # Entities in testset are annotated by GNormPlus, which miss many interacting protein entities.
-    # Selecting the document that having least positive instances as valid set makes valid set and test set have similar distribution.
+    # Selecting the document that having least instances as valid set makes valid set and test set have similar distribution.
     docCount = int(docR * len(pmids))
     validPmids = set(sortedpmids[0:docCount])
     # Add sample which pmid are in validPmids to validSet.
