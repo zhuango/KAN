@@ -111,7 +111,8 @@ class EncoderLayer(Module):
         output = self.multiHeadAttention(Q, K, V)
         output = self.AddNorm(output.transpose(0, 1) + self.ff(output).transpose(0, 1)).transpose(0, 1)
         return output
-
+# valid: 0.10
+# lr : 0.02
 class KAN(Module):
     def __init__(self, wordEmbed, entityEmbed, wordVectorLength, entityVecSize, hopNumber, classNumber, cuda=True):
         super(KAN, self).__init__()
