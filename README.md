@@ -1,13 +1,13 @@
 # KAN
 
 ![Supported Python versions](https://img.shields.io/badge/python-3.6-blue.svg)
-![Supported Pytorch versions](https://img.shields.io/badge/pytorch-0.2-blue.svg)
+![Supported Pytorch versions](https://img.shields.io/badge/pytorch-0.4-blue.svg)
 
 **Knowledge-aware Attention Network for Protein-Protein Interaction Extraction** Zhou, H., Liu Z., Ning S. et al. Accepted by ***The Journal of Biomedical informatics***
 
 An implementation of Knowledge-aware attention networks (KAN) for protein-protein extraction task.
 
-This code has been written using Pytorch 0.2.
+This code has been written using Pytorch 0.4.
 
 ## Import data
 We have put word embeddings, entity and relation embeddings learned from TransE[1] to the folder of data.
